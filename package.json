@@ -1,0 +1,23 @@
+{
+  "name": "@content-island/ai-skills",
+  "version": "0.1.0",
+  "description": "Installable Claude Code skills for Content Island projects",
+  "bin": {
+    "content-island-skills": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "content-island-*/**"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "claude-code",
+    "ai-skills",
+    "content-island",
+    "skills"
+  ],
+  "license": "MIT"
+}

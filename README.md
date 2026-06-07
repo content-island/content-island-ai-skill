@@ -18,9 +18,40 @@ Think of them as:
 
 ---
 
+## Installation via npx
+
+Install any skill into your project's standard Claude Code folder (`.claude/skills/`) with a single command — no `postinstall`, no lifecycle scripts, you decide when code runs:
+
+```bash
+# List available skills
+npx @content-island/ai-skills list
+
+# Install one skill (short alias or full folder name both work)
+npx @content-island/ai-skills install astro-pods
+npx @content-island/ai-skills install content-island-client-api
+
+# Install every skill
+npx @content-island/ai-skills install all
+
+# Overwrite an already-installed skill
+npx @content-island/ai-skills install astro-pods --force
+```
+
+Result:
+
+```text
+my-project/
+└── .claude/
+    └── skills/
+        └── content-island-astro-pods-architecture/
+            └── SKILL.md
+```
+
+---
+
 ## Available Skills
 
-### 1. Client API Skill (`client-api/skill.md`)
+### 1. Client API Skill (`content-island-client-api`)
 
 Helps developers interact with the **Content Island Client API** using only the official documentation.
 
@@ -38,7 +69,7 @@ Helps developers interact with the **Content Island Client API** using only the 
 - TypeScript-first examples
 - Security best practices for tokens
 
-### 2. Astro PODS Architecture Skill (`astro-pods/skill.md`)
+### 2. Astro PODS Architecture Skill (`content-island-astro-pods-architecture`)
 
 Defines a clear **PODS (feature/islands) architecture** for Astro projects.
 
@@ -55,6 +86,16 @@ Defines a clear **PODS (feature/islands) architecture** for Astro projects.
 - Isolation rules between pods
 - Layer responsibilities (pages, layouts, pods, common)
 - Implementation checklists
+
+### 3. TanStack Start PODS Architecture Skill (`content-island-tanstack-start-pods-architecture`)
+
+Defines a clear **PODS (feature/islands) architecture** for TanStack Start projects.
+
+**Use this skill when:**
+
+- Structuring a TanStack Start project with Content Island
+- Creating or extending PODS (feature islands)
+- Ensuring consistent project architecture
 
 ---
 
@@ -77,17 +118,19 @@ These skills address that by:
 
 ## How to use
 
-1. Copy the relevant `skill.md` into your project repository
+The recommended way is the [npx installer](#installation-via-npx) above, which copies the skill into `.claude/skills/` so Claude Code picks it up automatically.
+
+Alternatively, you can install manually:
+
+1. Copy the relevant `SKILL.md` into `.claude/skills/<skill-name>/` in your project
 2. Make it available to your LLM tool as part of the project context
 3. Instruct the model to follow the rules defined in the skill
 
 Example instructions:
 
-> "Follow the Content Island Client API rules defined in `client-api/skill.md`."
+> "Follow the Content Island Client API rules defined in `content-island-client-api`."
 
-> "Use the PODS architecture defined in `astro-pods/skill.md` for this Astro project."
-
-No additional setup is required.
+> "Use the PODS architecture defined in `content-island-astro-pods-architecture` for this Astro project."
 
 ---
 
