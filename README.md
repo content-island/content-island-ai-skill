@@ -83,6 +83,7 @@ src/
   core/               # discover, install, frontmatter, paths
   commands/           # list, install, interactive (@clack/prompts)
   core/*.spec.ts      # vitest tests (AAA)
+config/test/          # vitest config (config.ts)
 skills/               # one folder per skill, each with a SKILL.md
 cli.js                # bin wrapper -> dist/index.js
 local-npm-registry/   # Verdaccio (Docker) for local publish testing
@@ -95,8 +96,7 @@ local-npm-registry/   # Verdaccio (Docker) for local publish testing
 | `npm install` | Install dependencies |
 | `npm run type-check` | `tsc --noEmit` |
 | `npm run build` | Bundle `src/` → `dist/index.js` (Vite) |
-| `npm run test` | Run vitest once |
-| `npm run test:watch` | Run vitest in watch mode |
+| `npm run test` | Run vitest (config in `config/test/config.ts`) |
 | `npm run changeset` | Create a changeset describing your change |
 | `npm run start:local-npm-registry` | Build + start Verdaccio at `localhost:4873` |
 | `npm run stop:local-npm-registry` | Stop Verdaccio |
