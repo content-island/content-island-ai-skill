@@ -20,8 +20,7 @@
   "scripts": {
     "build": "vite build",
     "type-check": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest -c ./config/test/config.ts",
     "changeset": "changeset",
     "publish-packages": "changeset publish",
     "start:local-npm-registry": "npm run build && cd ./local-npm-registry && npm start",
