@@ -20,7 +20,27 @@ Think of them as:
 
 ## Installation via npx
 
-Install any skill into your project's standard Claude Code folder (`.claude/skills/`) with a single command — no `postinstall`, no lifecycle scripts, you decide when code runs:
+Install any skill into your project's standard Claude Code folder (`.claude/skills/`) with a single command — no `postinstall`, no lifecycle scripts, you decide when code runs.
+
+> **You don't install this package.** It's a one-shot installer, so just run it
+> with `npx` — it's fetched, run once, and leaves nothing in your project.
+> The command is the package name, `npx @content-island/ai-skills`. (Internally
+> the binary is `content-island-skills`; an npm `bin` can't contain a scope, but
+> `npx @content-island/ai-skills` resolves to it automatically.)
+
+### Interactive mode (recommended)
+
+Run with no arguments to open an interactive selector. **All skills come pre-selected** — just unselect the ones you don't want and press enter:
+
+```bash
+npx @content-island/ai-skills
+```
+
+- Navigate with the arrow keys, toggle with `space`, confirm with `enter`.
+- Skills already present in `.claude/skills/` are labelled `(installed)`; if you keep them selected you'll be asked to confirm before overwriting.
+- Press `Ctrl-C` to cancel without installing anything.
+
+### Command mode (CI / scripting)
 
 ```bash
 # List available skills
@@ -46,6 +66,147 @@ my-project/
         └── content-island-astro-pods-architecture/
             └── SKILL.md
 ```
+
+---
+
+## Development
+
+This package is written in TypeScript and built with Vite. Functions are
+written as arrow functions and tests follow the AAA (Arrange / Act / Assert)
+structure.
+
+### Project layout
+
+```text
+src/
+  index.ts            # cac CLI: default -> interactive, list, install
+  core/               # discover, install, frontmatter, paths
+  commands/           # list, install, interactive (@clack/prompts)
+  core/*.spec.ts      # vitest tests (AAA)
+skills/               # one folder per skill, each with a SKILL.md
+cli.js                # bin wrapper -> dist/index.js
+local-npm-registry/   # Verdaccio (Docker) for local publish testing
+```
+
+### npm scripts
+
+| Script | What it does |
+| --- | --- |
+| `npm install` | Install dependencies |
+| `npm run type-check` | `tsc --noEmit` |
+| `npm run build` | Bundle `src/` → `dist/index.js` (Vite) |
+| `npm run test` | Run vitest once |
+| `npm run test:watch` | Run vitest in watch mode |
+| `npm run changeset` | Create a changeset describing your change |
+| `npm run start:local-npm-registry` | Build + start Verdaccio at `localhost:4873` |
+| `npm run stop:local-npm-registry` | Stop Verdaccio |
+| `npm run local:publish` | Build + publish to Verdaccio **without bumping the version** |
+| `npm run local:publish:release` | Full versioned rehearsal: consumes changesets, bumps version, publishes to Verdaccio (see DEPLOY) |
+
+### Adding a new skill
+
+Create `skills/content-island-<name>/SKILL.md` with `name:` and `description:`
+frontmatter. That's it — the CLI discovers skills automatically (no code
+changes) and the `skills` entry in `files` ships it on publish.
+
+---
+
+## Running locally (all options)
+
+You don't need to publish to try the CLI. Pick whichever fits:
+
+### 1. Run the built file directly (fastest)
+
+```bash
+npm run build
+
+# Interactive selector (all skills pre-selected)
+node cli.js
+
+# Commands
+node cli.js list
+node cli.js install astro-pods
+node cli.js install all --force
+```
+
+Skills are installed into `.claude/skills/` of the **current working
+directory**, so `cd` into a throwaway folder to test the result.
+
+### 2. `npm link` (test as a real dependency, live updates)
+
+```bash
+# In this repo
+npm run build
+npm link
+
+# In a test project
+npm link @content-island/ai-skills
+npx @content-island/ai-skills          # interactive
+npx @content-island/ai-skills list
+
+# Cleanup
+npm unlink @content-island/ai-skills      # in the test project
+npm rm --global @content-island/ai-skills # in this repo
+```
+
+Re-run `npm run build` after code changes (the link points at `dist/`).
+
+### 3. Tarball (closest to the real `npm install`)
+
+```bash
+npm run build
+npm pack                       # creates content-island-ai-skills-<v>.tgz
+
+# In a test project
+npm install /absolute/path/to/content-island-ai-skills-<v>.tgz
+npx @content-island/ai-skills
+```
+
+### 4. Verdaccio local registry (full publish simulation, requires Docker)
+
+Mirrors the Content Island local-registry flow end to end.
+
+**In this repo** — start Verdaccio and publish:
+
+```bash
+npm run start:local-npm-registry      # build + Verdaccio at localhost:4873
+
+# Publish WITHOUT bumping the version (the usual case for local testing):
+npm run local:publish
+
+# …or the full versioned rehearsal (consumes changesets, see DEPLOY.md):
+npm run local:publish:release
+```
+
+Now the package is available at `http://localhost:4873`.
+
+**In your test project** — add an `.npmrc` pointing at the local registry, then
+install normally (no `--registry` flag needed):
+
+```ini
+# .npmrc
+registry=http://localhost:4873
+//localhost:4873/:_authToken="local-token"
+@content-island:registry=http://localhost:4873
+```
+
+```bash
+npm install @content-island/ai-skills
+npx @content-island/ai-skills             # interactive selector
+npx @content-island/ai-skills install all
+```
+
+> Without that `.npmrc` (and without `--registry`), `npm install` goes to the
+> public registry and fails with `404` until the package is published there.
+
+Stop the registry when done (and remove the test project's `.npmrc` so it goes
+back to the public registry):
+
+```bash
+npm run stop:local-npm-registry
+```
+
+> For publishing to the **public npm registry**, see [DEPLOY.md](./DEPLOY.md).
 
 ---
 
