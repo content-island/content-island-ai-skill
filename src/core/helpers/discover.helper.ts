@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PREFIX, SKILL_FILE } from './paths.js';
-import { readFrontmatter } from './frontmatter.js';
+import { PREFIX, SKILL_FILE } from './paths.helper.js';
+import { readFrontmatter } from './frontmatter.helper.js';
 
 export interface Skill {
   folder: string;

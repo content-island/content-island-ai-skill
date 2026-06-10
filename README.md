@@ -71,7 +71,7 @@ my-project/
 
 ## Development
 
-This package is written in TypeScript and built with Vite. Functions are
+This package is written in TypeScript and built with tsdown. Functions are
 written as arrow functions and tests follow the AAA (Arrange / Act / Assert)
 structure.
 
@@ -79,13 +79,13 @@ structure.
 
 ```text
 src/
-  index.ts            # cac CLI: default -> interactive, list, install
-  core/               # discover, install, frontmatter, paths
-  commands/           # list, install, interactive (@clack/prompts)
-  core/*.spec.ts      # vitest tests (AAA)
+  index.ts                       # cac CLI: default -> interactive, list, install
+  core/helpers/*.helper.ts       # discover, install, frontmatter, paths
+  core/helpers/*.helper.spec.ts  # vitest tests (AAA)
+  commands/                      # list, install, interactive (@clack/prompts)
 config/test/          # vitest config (config.ts)
 skills/               # one folder per skill, each with a SKILL.md
-cli.js                # bin wrapper -> dist/index.js
+tsdown.config.ts      # build config (tsdown) -> dist/index.mjs
 local-npm-registry/   # Verdaccio (Docker) for local publish testing
 ```
 
@@ -95,7 +95,7 @@ local-npm-registry/   # Verdaccio (Docker) for local publish testing
 | --- | --- |
 | `npm install` | Install dependencies |
 | `npm run type-check` | `tsc --noEmit` |
-| `npm run build` | Bundle `src/` → `dist/index.js` (Vite) |
+| `npm run build` | Bundle `src/` → `dist/index.mjs` (tsdown) |
 | `npm run test` | Run vitest (config in `config/test/config.ts`) |
 | `npm run changeset` | Create a changeset describing your change |
 | `npm run start:local-npm-registry` | Build + start Verdaccio at `localhost:4873` |
@@ -121,12 +121,12 @@ You don't need to publish to try the CLI. Pick whichever fits:
 npm run build
 
 # Interactive selector (all skills pre-selected)
-node cli.js
+node dist/index.mjs
 
 # Commands
-node cli.js list
-node cli.js install astro-pods
-node cli.js install all --force
+node dist/index.mjs list
+node dist/index.mjs install astro-pods
+node dist/index.mjs install all --force
 ```
 
 Skills are installed into `.claude/skills/` of the **current working

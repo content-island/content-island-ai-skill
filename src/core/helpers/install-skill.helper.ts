@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { DEST_DIR } from './paths.js';
-import type { Skill } from './discover.js';
+import { DEST_DIR } from './paths.helper.js';
+import type { Skill } from './discover.helper.js';
 
 // Whether a skill is already present in the local .claude/skills/ directory.
 export const isInstalled = (skill: Skill): boolean =>

@@ -9,14 +9,14 @@ export const SKILL_FILE = 'SKILL.md';
 export const DEST_DIR = path.join('.claude', 'skills');
 
 // Absolute path to the bundled `skills/` directory.
-// At runtime the built file lives at `<pkg>/dist/index.js`, so `skills/`
+// At runtime the built file lives at `<pkg>/dist/index.mjs`, so `skills/`
 // sits one level up. When running from source (tsx) it lives at
-// `<pkg>/src/core/paths.ts`, two levels up. Pick whichever exists.
+// `<pkg>/src/core/helpers/paths.helper.ts`, three levels up. Pick whichever exists.
 export const resolveSkillsDir = (): string => {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    path.resolve(here, '..', 'skills'), // dist/index.js -> ../skills
-    path.resolve(here, '..', '..', 'skills'), // src/core/paths.ts -> ../../skills
+    path.resolve(here, '..', 'skills'), // dist/index.mjs -> ../skills
+    path.resolve(here, '..', '..', '..', 'skills'), // src/core/helpers/paths.helper.ts -> ../../../skills
   ];
   return candidates.find(dir => fs.existsSync(dir)) ?? candidates[0];
 };

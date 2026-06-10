@@ -1,5 +1,5 @@
-import { discoverSkills } from '../core/discover.js';
-import { resolveSkillsDir } from '../core/paths.js';
+import { discoverSkills } from '../core/helpers/discover.helper.js';
+import { resolveSkillsDir } from '../core/helpers/paths.helper.js';
 
 export const runList = (): void => {
   const skills = discoverSkills(resolveSkillsDir());
