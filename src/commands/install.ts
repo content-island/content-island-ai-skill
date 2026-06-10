@@ -1,7 +1,7 @@
 import path from 'node:path';
-import { DEST_DIR, resolveSkillsDir } from '../core/helpers/paths.helper.js';
-import { discoverSkills, resolveSkill } from '../core/helpers/discover.helper.js';
-import { installSkill } from '../core/helpers/install-skill.helper.js';
+import { DEST_DIR, resolveSkillsDir } from '../core/helpers/paths.helper';
+import { discoverSkills, resolveSkill } from '../core/helpers/discover.helper';
+import { installSkill } from '../core/helpers/install-skill.helper';
 
 export interface InstallOptions {
   force?: boolean;

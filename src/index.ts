@@ -1,7 +1,7 @@
 import { cac } from 'cac';
-import { runList } from './commands/list.js';
-import { runInstall } from './commands/install.js';
-import { runInteractive } from './commands/interactive.js';
+import { runList } from './commands/list';
+import { runInstall } from './commands/install';
+import { runInteractive } from './commands/interactive';
 import packageJson from '../package.json' with { type: 'json' };
 
 const cli = cac('content-island-skills');

@@ -14,6 +14,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -21,11 +22,17 @@ jobs:
       - name: Setup node version
         uses: actions/setup-node@v4
         with:
-          node-version: 22.x
+          node-version-file: '.nvmrc'
           registry-url: https://registry.npmjs.org
 
       - name: Install
         run: npm ci
+
+      - name: Check TypeScript types
+        run: npm run type-check
+
+      - name: Run tests
+        run: npm test
 
       - name: Build
         run: npm run build
@@ -42,3 +49,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'

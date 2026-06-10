@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DEST_DIR, PREFIX, SKILL_FILE, resolveSkillsDir } from './paths.helper.js';
+import { DEST_DIR, PREFIX, SKILL_FILE, resolveSkillsDir } from './paths.helper';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_SKILLS_DIR = path.resolve(HERE, '..', '..', '..', 'skills');

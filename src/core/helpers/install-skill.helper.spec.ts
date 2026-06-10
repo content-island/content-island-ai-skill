@@ -1,14 +1,13 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { installSkill, isInstalled } from './install-skill.helper.js';
-import { DEST_DIR } from './paths.helper.js';
-import type { Skill } from './discover.helper.js';
+import { installSkill, isInstalled } from './install-skill.helper';
+import { DEST_DIR } from './paths.helper';
+import type { Skill } from './discover.helper';
 
 const SKILL: Skill = { folder: 'content-island-demo', alias: 'demo', description: 'demo' };
 
-let originalCwd: string;
-let cwd: string;
+let baseDir: string;
 let sourceDir: string;
 
 // Build a source skills dir containing SKILL with a nested file, so the
@@ -20,41 +19,38 @@ const seedSource = (skillBody = 'original'): void => {
   fs.writeFileSync(path.join(skillDir, 'nested', 'extra.md'), 'extra');
 };
 
-const installedPath = (...segments: string[]): string => path.join(cwd, DEST_DIR, SKILL.folder, ...segments);
+const installedPath = (...segments: string[]): string => path.join(baseDir, DEST_DIR, SKILL.folder, ...segments);
 
 beforeEach(() => {
-  originalCwd = process.cwd();
-  cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-install-cwd-'));
+  baseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-install-cwd-'));
   sourceDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-install-src-'));
-  process.chdir(cwd);
   seedSource();
 });
 
 afterEach(() => {
-  process.chdir(originalCwd);
-  fs.rmSync(cwd, { recursive: true, force: true });
+  fs.rmSync(baseDir, { recursive: true, force: true });
   fs.rmSync(sourceDir, { recursive: true, force: true });
 });
 
 describe('isInstalled', () => {
   it('is false before installing', () => {
     // Act + Assert
-    expect(isInstalled(SKILL)).toBe(false);
+    expect(isInstalled(SKILL, baseDir)).toBe(false);
   });
 
   it('is true after installing', () => {
     // Arrange
-    installSkill(SKILL, sourceDir, false);
+    installSkill(SKILL, sourceDir, false, baseDir);
 
     // Act + Assert
-    expect(isInstalled(SKILL)).toBe(true);
+    expect(isInstalled(SKILL, baseDir)).toBe(true);
   });
 });
 
 describe('installSkill', () => {
   it('copies the skill into .claude/skills on a clean install', () => {
     // Act
-    const result = installSkill(SKILL, sourceDir, false);
+    const result = installSkill(SKILL, sourceDir, false, baseDir);
 
     // Assert
     expect(result).toEqual({ installed: true, skipped: false });
@@ -63,7 +59,7 @@ describe('installSkill', () => {
 
   it('copies nested files recursively', () => {
     // Act
-    installSkill(SKILL, sourceDir, false);
+    installSkill(SKILL, sourceDir, false, baseDir);
 
     // Assert
     expect(fs.existsSync(installedPath('nested', 'extra.md'))).toBe(true);
@@ -72,21 +68,21 @@ describe('installSkill', () => {
 
   it('creates the .claude/skills directory when it does not exist', () => {
     // Arrange
-    expect(fs.existsSync(path.join(cwd, DEST_DIR))).toBe(false);
+    expect(fs.existsSync(path.join(baseDir, DEST_DIR))).toBe(false);
 
     // Act
-    installSkill(SKILL, sourceDir, false);
+    installSkill(SKILL, sourceDir, false, baseDir);
 
     // Assert
-    expect(fs.existsSync(path.join(cwd, DEST_DIR))).toBe(true);
+    expect(fs.existsSync(path.join(baseDir, DEST_DIR))).toBe(true);
   });
 
   it('skips an already-installed skill when force is false', () => {
     // Arrange
-    installSkill(SKILL, sourceDir, false);
+    installSkill(SKILL, sourceDir, false, baseDir);
 
     // Act
-    const result = installSkill(SKILL, sourceDir, false);
+    const result = installSkill(SKILL, sourceDir, false, baseDir);
 
     // Assert
     expect(result).toEqual({ installed: false, skipped: true, reason: 'already installed' });
@@ -94,11 +90,11 @@ describe('installSkill', () => {
 
   it('does not modify an existing install when skipped', () => {
     // Arrange
-    installSkill(SKILL, sourceDir, false);
+    installSkill(SKILL, sourceDir, false, baseDir);
     fs.writeFileSync(installedPath('SKILL.md'), 'locally edited');
 
     // Act
-    installSkill(SKILL, sourceDir, false);
+    installSkill(SKILL, sourceDir, false, baseDir);
 
     // Assert
     expect(fs.readFileSync(installedPath('SKILL.md'), 'utf8')).toBe('locally edited');
@@ -106,11 +102,11 @@ describe('installSkill', () => {
 
   it('overwrites an existing install when force is true', () => {
     // Arrange
-    installSkill(SKILL, sourceDir, false);
+    installSkill(SKILL, sourceDir, false, baseDir);
     fs.writeFileSync(installedPath('SKILL.md'), 'locally edited');
 
     // Act
-    const result = installSkill(SKILL, sourceDir, true);
+    const result = installSkill(SKILL, sourceDir, true, baseDir);
 
     // Assert
     expect(result).toEqual({ installed: true, skipped: false });
@@ -119,11 +115,11 @@ describe('installSkill', () => {
 
   it('removes stale files from the previous install when forced', () => {
     // Arrange
-    installSkill(SKILL, sourceDir, false);
+    installSkill(SKILL, sourceDir, false, baseDir);
     fs.writeFileSync(installedPath('stale.md'), 'remove me');
 
     // Act
-    installSkill(SKILL, sourceDir, true);
+    installSkill(SKILL, sourceDir, true, baseDir);
 
     // Assert
     expect(fs.existsSync(installedPath('stale.md'))).toBe(false);

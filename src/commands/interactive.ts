@@ -1,8 +1,8 @@
 import * as p from '@clack/prompts';
 import path from 'node:path';
-import { DEST_DIR, resolveSkillsDir } from '../core/helpers/paths.helper.js';
-import { discoverSkills } from '../core/helpers/discover.helper.js';
-import { installSkill, isInstalled } from '../core/helpers/install-skill.helper.js';
+import { DEST_DIR, resolveSkillsDir } from '../core/helpers/paths.helper';
+import { discoverSkills } from '../core/helpers/discover.helper';
+import { installSkill, isInstalled } from '../core/helpers/install-skill.helper';
 
 // Interactive selector: every skill is pre-selected; already-installed ones
 // are labelled and require confirmation before being overwritten.

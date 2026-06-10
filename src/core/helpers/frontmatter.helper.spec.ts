@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { readFrontmatter } from './frontmatter.helper.js';
+import { readFrontmatter } from './frontmatter.helper';
 
 let tmp: string;
 

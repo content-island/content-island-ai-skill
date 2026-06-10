@@ -5,5 +5,3 @@ services:
       - '4873:4873'
     volumes:
       - ./config:/verdaccio/conf
-volumes:
-  config:
