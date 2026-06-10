@@ -101,7 +101,7 @@ local-npm-registry/   # Verdaccio (Docker) for local publish testing
 | `npm run start:local-npm-registry` | Build + start Verdaccio at `localhost:4873` |
 | `npm run stop:local-npm-registry` | Stop Verdaccio |
 | `npm run local:publish` | Build + publish to Verdaccio **without bumping the version** |
-| `npm run local:publish:release` | Full versioned rehearsal: consumes changesets, bumps version, publishes to Verdaccio (see DEPLOY) |
+| `npm run local:publish:release` | Full versioned rehearsal: consumes changesets, bumps version, publishes to Verdaccio |
 
 ### Adding a new skill
 
@@ -174,7 +174,7 @@ npm run start:local-npm-registry      # build + Verdaccio at localhost:4873
 # Publish WITHOUT bumping the version (the usual case for local testing):
 npm run local:publish
 
-# …or the full versioned rehearsal (consumes changesets, see DEPLOY.md):
+# …or the full versioned rehearsal (consumes changesets):
 npm run local:publish:release
 ```
 
@@ -206,7 +206,8 @@ back to the public registry):
 npm run stop:local-npm-registry
 ```
 
-> For publishing to the **public npm registry**, see [DEPLOY.md](./DEPLOY.md).
+> Publishing to the **public npm registry** runs automatically from the
+> `Release` GitHub Action when changesets are merged to `main`.
 
 ---
 
