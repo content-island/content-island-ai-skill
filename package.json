@@ -1,0 +1,50 @@
+{
+  "name": "@content-island/ai-skills",
+  "version": "0.0.0",
+  "description": "Installable Claude Code skills for Content Island projects",
+  "private": false,
+  "author": "Lemoncode",
+  "license": "MIT",
+  "bin": {
+    "content-island-skills": "./dist/index.mjs"
+  },
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "type-check": "tsc --noEmit",
+    "test": "vitest -c ./config/test/config.ts",
+    "changeset": "changeset",
+    "publish-packages": "changeset publish",
+    "start:local-npm-registry": "npm run build && cd ./local-npm-registry && npm start",
+    "stop:local-npm-registry": "cd ./local-npm-registry && npm stop",
+    "local:publish": "npm run build && node local-npm-registry/publish.js npm publish",
+    "local:publish:release": "npm run start:local-npm-registry && changeset version && node local-npm-registry/publish.js changeset publish"
+  },
+  "keywords": [
+    "claude-code",
+    "ai-skills",
+    "content-island",
+    "skills"
+  ],
+  "dependencies": {
+    "@clack/prompts": "1.2.0",
+    "cac": "6.7.14"
+  },
+  "devDependencies": {
+    "@changesets/cli": "2.31.0",
+    "@types/node": "24.13.1",
+    "tsdown": "0.21.9",
+    "typescript": "5.9.3",
+    "vitest": "3.2.6"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -10,8 +10,8 @@ Your goal is to implement features by placing **UI, API models, API clients, bus
 
 ### Astro conventions
 
-- **Astro layouts** live in: `src/layouts/astro/`
-- **Astro pages** live in: `src/pages/astro/`
+- **Astro layouts** live in: `src/layouts/`
+- **Astro pages** live in: `src/pages/`
 
 Pages should contain minimal logic:
 
