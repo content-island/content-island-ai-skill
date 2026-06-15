@@ -5,6 +5,14 @@
   "private": false,
   "author": "Lemoncode",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/content-island/content-island-ai-skill.git"
+  },
+  "homepage": "https://github.com/content-island/content-island-ai-skill#readme",
+  "bugs": {
+    "url": "https://github.com/content-island/content-island-ai-skill/issues"
+  },
   "bin": {
     "content-island-skills": "./dist/index.mjs"
   },
