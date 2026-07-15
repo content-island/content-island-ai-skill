@@ -56,8 +56,8 @@ Each pod must follow this structure:
 > **About the repository**
 >
 > - The `repository` is **optional**: create it only in pods that load or persist data (pods that have an `api`). Pure UI pods don't need it.
-> - It is the **only** place that imports `api` and `mapper`.
-> - It always returns the pod `model` (domain / ViewModel). Its consumers (loaders, `pod.tsx`, components) never see the api models or the mappers.
+> - The repository is the single data-access entry point of the pod. It orchestrates API calls and mapping so consumers never deal with API models or API clients directly.
+> - It always returns the pod `model` (domain / ViewModel). Loaders, server functions and pod code consume only the `model`, never the API models or the mapping logic.
 
 ---
 
@@ -109,7 +109,7 @@ Each pod must follow this structure:
 - Create pod
 - Add API + mapper + model + business
 - Add repository (only if the pod loads/persists data): wraps `api` + `mapper` and returns the `model`
-- Build UI (consumes the repository, never `api`/`mapper` directly)
+- Loaders, server functions and server-side pod orchestration access data through the repository. UI components consume models passed through loader data, props or approved client-side query abstractions, and never import API clients or API models.
 - Keep route clean (loaders call the repository)
 - No cross-pod imports — if you think you need one, stop and ask the user first
 
