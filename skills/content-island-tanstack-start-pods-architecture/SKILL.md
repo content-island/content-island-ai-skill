@@ -57,7 +57,8 @@ Each pod must follow this structure:
 ## 3) Architectural Rules
 
 - Pods are isolated
-- No cross-pod imports
+- Avoid cross-pod imports as a default rule — pods should not import from each other
+- **Exception**: if there is a strong justification for a cross-pod import, do **not** do it silently. Stop and ask the user first, explaining the reason; only proceed if the user agrees. Otherwise, prefer extracting the shared piece into `src/common/`
 - Shared logic only in `src/common/`
 - Routes must stay thin
 
@@ -95,11 +96,12 @@ Each pod must follow this structure:
 - Add API + business + mapper + model
 - Build UI
 - Keep route clean
+- No cross-pod imports — if you think you need one, stop and ask the user first
 
 ---
 
 ## Summary
 
 - Routes = orchestration
-- Pods = features
+- Pods = features (isolated, no cross-pod imports by default — ask the user if a strong exception arises)
 - Common = shared
