@@ -50,7 +50,14 @@ Each pod must follow this structure:
 - `src/pods/{pod-name}/api/{api-name}.api.ts`
 - `src/pods/{pod-name}/{pod-name}.model.ts`
 - `src/pods/{pod-name}/{pod-name}.mapper.ts`
+- `src/pods/{pod-name}/{pod-name}.repository.ts`
 - `src/pods/{pod-name}/{pod-name}.business.ts`
+
+> **About the repository**
+>
+> - The `repository` is **optional**: create it only in pods that load or persist data (pods that have an `api`). Pure UI pods don't need it.
+> - It is the **only** place that imports `api` and `mapper`.
+> - It always returns the pod `model` (domain / ViewModel). Its consumers (loaders, `pod.tsx`, components) never see the api models or the mappers.
 
 ---
 
@@ -61,6 +68,7 @@ Each pod must follow this structure:
 - **Exception**: if there is a strong justification for a cross-pod import, do **not** do it silently. Stop and ask the user first, explaining the reason; only proceed if the user agrees. Otherwise, prefer extracting the shared piece into `src/common/`
 - Shared logic only in `src/common/`
 - Routes must stay thin
+- **Data access goes through the repository (single access point)**: only `{pod-name}.repository.ts` may import/use `api` and `mapper`. Route loaders, `pod.tsx` and components must obtain data **always** through the repository, which returns the `model` (domain / ViewModel)
 
 ---
 
@@ -70,7 +78,7 @@ Each pod must follow this structure:
 
 - Compose pods
 - Handle params
-- Load data
+- Load data (loaders call the pod `repository`, never `api`/`mapper` directly)
 
 ### Pods
 
@@ -88,14 +96,21 @@ Each pod must follow this structure:
 
 - Pure transformations
 
+### Repository
+
+- Orchestrates `api` + `mapper`
+- **Single data-access point** of the pod: the only place allowed to touch `api` and `mapper`
+- Always returns the pod `model` (domain / ViewModel); hides api models and mappers from its consumers
+
 ---
 
 ## 5) Checklist
 
 - Create pod
-- Add API + business + mapper + model
-- Build UI
-- Keep route clean
+- Add API + mapper + model + business
+- Add repository (only if the pod loads/persists data): wraps `api` + `mapper` and returns the `model`
+- Build UI (consumes the repository, never `api`/`mapper` directly)
+- Keep route clean (loaders call the repository)
 - No cross-pod imports — if you think you need one, stop and ask the user first
 
 ---
@@ -104,4 +119,5 @@ Each pod must follow this structure:
 
 - Routes = orchestration
 - Pods = features (isolated, no cross-pod imports by default — ask the user if a strong exception arises)
+- Repository = data access (api + mapper → model), single access point
 - Common = shared
