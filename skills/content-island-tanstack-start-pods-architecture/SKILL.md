@@ -13,7 +13,9 @@ Your goal is to implement features by placing **UI, API models, API clients, bus
 ### TanStack Start conventions
 
 - **Routes** live in: `src/routes/`
-- **Root / app setup**: `src/root.tsx`
+- **Root route (app shell / global layout)**: `src/routes/__root.tsx`
+- **Router setup / configuration**: `src/router.tsx`
+- **Generated route tree (do not edit)**: `src/routeTree.gen.ts`
 - **Server functions / loaders / actions**: colocated in routes or extracted per pod
 
 Routes should contain minimal logic:
