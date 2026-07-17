@@ -15,7 +15,7 @@ jobs:
         run: |
           files=$(git diff --name-only --diff-filter=A "origin/${{ github.base_ref }}...HEAD" -- '.changeset/*.md' ':!.changeset/README.md' || true)
           if [ -z "$files" ]; then
-            echo "::error title=Missing changeset::This PR adds no changeset and is blocked. If the change should reach users, run 'npm run changeset'. If it should NOT trigger a release (CI, docs, chores), run 'npx changeset --empty'. How to publish: https://github.com/content-island/content-island-ai-skill/wiki/Publishing-a-new-version"
+            echo "::error title=Missing changeset::This PR adds no changeset and is blocked. If the change should reach users, run 'npm run changeset'. If it should NOT trigger a release (CI, docs, chores), run 'npx changeset --empty'. How to publish: https://github.com/content-island/content-island-ai-skill/wiki/Publishing-a-new-version-of-the-skill"
             exit 1
           fi
           echo "Changeset detected: $files"
