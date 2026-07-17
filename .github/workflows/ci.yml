@@ -8,6 +8,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Warn if changeset is missing
+        run: |
+          files=$(git diff --name-only --diff-filter=A "origin/${{ github.base_ref }}...HEAD" -- '.changeset/*.md' ':!.changeset/README.md' || true)
+          if [ -z "$files" ]; then
+            echo "::warning title=Missing changeset::This PR does not add a changeset, so NO new version will be published to npm. If this change should reach users, run 'npm run changeset'. How to publish: https://github.com/content-island/content-island-ai-skill/wiki/Publishing-a-new-version"
+          else
+            echo "Changeset detected: $files"
+          fi
 
       - name: Use Node.js
         uses: actions/setup-node@v6
