@@ -1,5 +1,11 @@
 # @content-island/ai-skills
 
+## 1.0.0
+
+### Major Changes
+
+- d7a5f6f: TanStack Start update
+
 ## 0.2.0
 
 ### Minor Changes
