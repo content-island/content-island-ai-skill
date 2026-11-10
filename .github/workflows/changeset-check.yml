@@ -1,0 +1,46 @@
+name: Changeset Check
+
+# Fail a PR that changes publishable files (src/ → dist, or skills/) without adding
+# a changeset, so a publishable change can never land without a version bump.
+# The changesets "Version Packages" PR (head branch changeset-release/main) consumes
+# changesets rather than adding one, so it is exempt.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  changeset-check:
+    if: github.head_ref != 'changeset-release/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # need base..head range for the diff
+
+      - name: Require a changeset for publishable changes
+        # Pass the SHAs via env (not `${{ }}` inline) to avoid run-block injection.
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        # Specs under src/ never reach dist/ (tsdown bundles from src/index.ts),
+        # so a spec-only PR needs no changeset.
+        run: |
+          PUBLISHABLE_CHANGED=$(git diff --name-only "$BASE" "$HEAD" -- src skills \
+            ':(exclude,glob)src/**/*.spec.ts' \
+            ':(exclude,glob)src/**/*.test.ts' \
+            | head -1)
+          if [ -z "$PUBLISHABLE_CHANGED" ]; then
+            echo "No publishable src/ or skills/ changes — changeset not required."
+            exit 0
+          fi
+
+          CHANGESET_ADDED=$(git diff --name-only --diff-filter=A "$BASE" "$HEAD" -- .changeset \
+            | grep -E '\.md$' | grep -v 'README.md' | head -1)
+          if [ -z "$CHANGESET_ADDED" ]; then
+            echo "::error::This PR changes publishable src/ or skills/ files but adds no changeset. Run 'npm run changeset' to add one."
+            exit 1
+          fi
+          echo "Changeset found: $CHANGESET_ADDED"
