@@ -40,6 +40,13 @@ jobs:
       # On a push to main:
       # - if changeset files exist, opens/updates a "Version Packages" PR
       # - if none remain (PR merged), publishes to npm
+      #
+      # npm auth is OIDC Trusted Publishing (id-token: write above + the trusted
+      # publisher configured on npmjs for this repo and this workflow filename).
+      # Do NOT set NPM_TOKEN / NODE_AUTH_TOKEN here: setup-node writes
+      # `_authToken=${NODE_AUTH_TOKEN}` into .npmrc, and a set-but-empty value
+      # makes npm use that token instead of OIDC. Provenance is generated
+      # automatically for a public package published from a public repo.
       - name: Create Release PR or Publish
         uses: changesets/action@v1
         with:
@@ -47,6 +54,3 @@ jobs:
           publish: npm run publish-packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'

@@ -14,7 +14,7 @@
     "url": "https://github.com/content-island/content-island-ai-skill/issues"
   },
   "bin": {
-    "content-island-skills": "./dist/index.mjs"
+    "content-island-skills": "dist/index.mjs"
   },
   "files": [
     "dist",
