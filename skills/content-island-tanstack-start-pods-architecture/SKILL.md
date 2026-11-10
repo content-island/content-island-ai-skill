@@ -17,7 +17,8 @@ Your goal is to implement features by placing **UI, API models, API clients, bus
 - **Root route (app shell / global layout)**: `src/routes/__root.tsx`
 - **Router setup / configuration**: `src/router.tsx`
 - **Generated route tree (do not edit)**: `src/routeTree.gen.ts`
-- **Server functions / loaders / actions**: colocated in routes or extracted per pod
+- **Server functions (`createServerFn`)**: defined in the pod **repository** (`{pod-name}.repository.ts`). The repository _is_ the pod's server function layer (see "The repository is the server function" below)
+- **Loaders / actions**: in routes; they call pod repositories
 
 Routes should contain minimal logic:
 
@@ -67,10 +68,23 @@ src/pods/{pod-name}/
 │   └── {component-name}.component.tsx
 └── api/
     ├── {api-model-name}.api-model.ts
-    └── {api-name}.api.ts
+    └── {api-name}.api.server.ts
 ```
 
 Not every pod needs every file. Create only the files required by the feature.
+
+### API file naming (server-only)
+
+API files **must** use the `.api.server.ts` suffix:
+
+```text
+api/car-list.api.server.ts     ✔
+api/car-list.api.ts            ✘
+```
+
+TanStack Start's import protection denies any `**/*.server.*` file in the client environment. Naming API files `.api.server.ts` therefore makes the build fail if API code (database queries, secrets, hashing, cookies, external calls) is ever imported into client code by mistake.
+
+API model files (`{api-model-name}.api-model.ts`) are type-only contracts and keep their name: they may be imported by the mapper and the repository.
 
 ### Component file naming
 
@@ -155,6 +169,47 @@ From the outside, the repository only speaks in ViewModels or other explicitly f
 
 API models must never escape the repository boundary.
 
+### The repository is the server function
+
+Each repository method is backed by a `createServerFn` defined **in the repository file**:
+
+```ts
+// car-list.repository.ts
+import { createServerFn } from "@tanstack/react-start";
+import { authMiddleware } from "#/common/auth/auth.middleware";
+import { getCars } from "./api/car-list.api.server";
+import { mapCarFromApi } from "./car-list.mapper";
+import { carListFilterSchema } from "./car-list.schema";
+import type { Car, CarListFilter } from "./car-list.model";
+
+const getCarsServerFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware]) // auth is enforced here, on the endpoint
+  .validator(carListFilterSchema) // validates the frontend-facing input
+  .handler(async ({ data }): Promise<Car[]> => {
+    const apiCars = await getCars(data); // server-only API (.api.server.ts)
+    return apiCars.map(mapCarFromApi); // mapping runs on the server
+  });
+
+export const carListRepository = {
+  getCars: (filter: CarListFilter): Promise<Car[]> =>
+    getCarsServerFn({ data: filter }),
+};
+```
+
+Why this works and why it is mandatory:
+
+- Consumers (loaders, routes, pods) import the repository. In the client bundle, the TanStack Start compiler replaces each `createServerFn` with an **RPC stub** (a `fetch` to `/_serverFn/...`) and **removes the handler body and every import used only inside it**.
+- Import protection runs after that, so the repository may import `*.api.server.ts` **as long as those imports are used only inside `.handler()`**.
+- The API is therefore never shipped to the browser, and the mapper runs on the server. The client receives the finished ViewModel.
+
+Rules for repository server functions:
+
+- Attach the required middleware (`authMiddleware`, role middleware...) to every server function that reads or writes private data. Route guards (`beforeLoad`) are navigation UX, not the data boundary.
+- Always use `.validator()` with a schema of the repository input (the frontend-facing model). Server functions are public HTTP endpoints.
+- Call `.api.server.ts` functions **only inside `.handler()`**. Using them anywhere else in the repository (or in any client-reachable file) makes the build fail with `Import denied in client environment`.
+- Anything that must run **on the client** (for example, turning a network failure into a `'server-unavailable'` result) goes in the exported repository object, **outside** the handler, wrapping the server function call.
+- Return values must be serializable (plain objects, arrays, strings, numbers, booleans, `Date`, `null`).
+
 ---
 
 ## 3) Import Rules
@@ -235,19 +290,23 @@ Cross-pod imports remain forbidden by default, even when an alias could resolve 
 The required flow for read operations is:
 
 ```text
-Route loader / server function
+Route loader / pod (client or SSR)
               ↓
-         Repository
+  Repository (server function; RPC stub on the client)
+              ↓   ── server side from here ──
+     Middleware (auth / role)
               ↓
-             API
+     Validator (frontend-facing input)
+              ↓
+     API (.api.server.ts)
               ↓
           API model
               ↓
             Mapper
               ↓
           ViewModel
-              ↓
-Route loader / server function / pod
+              ↓   ── serialized back ──
+Route loader / pod
 ```
 
 For example:
@@ -286,8 +345,8 @@ The required flow for write operations is:
 ```text
 Frontend-facing model / input
               ↓
-         Repository
-              ↓
+  Repository (server function: middleware + validator)
+              ↓   ── server side from here ──
             Mapper
               ↓
        API request model
@@ -316,9 +375,13 @@ The repository must perform both mapping directions whenever required.
 - Routes must stay thin
 - Data access must always go through the pod repository
 - Loaders should normally only call repositories
-- Components, loaders, server functions, hooks, and `pod.tsx` files must not import API clients
-- Components, loaders, server functions, hooks, and `pod.tsx` files must not import API models
-- Components, loaders, server functions, hooks, and `pod.tsx` files must not call mappers
+- Components, loaders, hooks, and `pod.tsx` files must not import API clients
+- Components, loaders, hooks, and `pod.tsx` files must not import API models
+- Components, loaders, hooks, and `pod.tsx` files must not call mappers
+- `createServerFn` for pod data lives only in the pod repository; do not define server functions in routes, components, API files, or other pod files
+- API files must use the `.api.server.ts` suffix and must not define `createServerFn`
+- `.api.server.ts` functions may be called only inside repository server function handlers (`.handler()`)
+- Every repository server function that touches private data must use the appropriate auth middleware and a `.validator()`
 - API models must remain inside the API, mapper, and repository layers
 - Only the repository exposes data-access operations to the rest of the application
 - Repository methods must expose frontend-facing types, never API-facing types
@@ -335,6 +398,8 @@ Treat any API model imported by a route, loader, component, hook, business file,
 
 Treat any mapper invocation outside the repository as an architectural violation.
 
+Treat any API file not named `.api.server.ts`, any `createServerFn` outside a repository, and any `.api.server.ts` call outside a repository server function handler as architectural violations.
+
 ---
 
 ## 6) Responsibilities
@@ -345,7 +410,7 @@ Routes are responsible for:
 
 - Composing pods
 - Handling route params and search params
-- Calling pod repositories from loaders or server functions
+- Calling pod repositories from loaders (the repository methods are the server functions)
 - Passing repository results to pods
 - Server/client orchestration
 
@@ -403,11 +468,14 @@ They:
 
 ### API
 
-API files perform fetch and I/O only.
+API files perform fetch and I/O only, and they are **server-only**.
 
 They:
 
-- Communicate with the backend or external data source
+- Are named `{api-name}.api.server.ts` (import protection keeps them out of the client bundle)
+- Do not define server functions (`createServerFn`); the repository does
+- Are called only from repository server function handlers
+- Communicate with the backend or external data source (database, external services, file system...)
 - Send and receive API models
 - Reflect the backend contract
 - Do not return ViewModels
@@ -487,13 +555,14 @@ A consumer of the repository must never need to perform additional API-to-ViewMo
 
 ### Repository
 
-The repository orchestrates the API and mapper.
+The repository orchestrates the API and mapper, and it **is the pod's server function layer**.
 
 It is the only public data-access entry point of the pod and the boundary between backend-facing and frontend-facing types.
 
 The repository must:
 
-- Call API functions
+- Define its operations with `createServerFn` (middleware + `.validator()` + `.handler()`)
+- Call API functions (`.api.server.ts`) only inside the server function handlers
 - Receive API models
 - Invoke mappers
 - Return complete ViewModels
@@ -502,6 +571,7 @@ The repository must:
 - Hide API implementation details
 - Hide mapper usage
 - Expose methods whose parameters and return values use only frontend-facing types
+- Keep client-only concerns (such as converting a network failure into a result value) in the exported repository object, outside the handlers
 
 The repository must not:
 
@@ -578,14 +648,29 @@ export const mapCarFromApi = (car: CarApiModel): Car => {
 ```
 
 ```ts
-// car.repository.ts
+// api/car.api.server.ts  (server-only: never reaches the client bundle)
+
+export const getCars = async (): Promise<CarApiModel[]> => {
+  const pool = await getDbPool();
+  const result = await pool
+    .request()
+    .query<CarApiModel>("SELECT ... FROM cars");
+  return result.recordset;
+};
+```
+
+```ts
+// car.repository.ts  (the repository is the server function)
+
+const getCarsServerFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async (): Promise<Car[]> => {
+    const apiCars = await getCars(); // only inside the handler
+    return apiCars.map(mapCarFromApi);
+  });
 
 export const carRepository = {
-  async getCars(): Promise<Car[]> {
-    const apiCars = await carApi.getCars();
-
-    return apiCars.map(mapCarFromApi);
-  },
+  getCars: (): Promise<Car[]> => getCarsServerFn(),
 };
 ```
 
@@ -598,7 +683,7 @@ Notice that the mapper:
 - Converts cents into euros
 - Creates the calculated `displayPrice` field
 
-The route loader only sees `Car[]`. It does not know that `CarApiModel` exists.
+The route loader only sees `Car[]`. It does not know that `CarApiModel` exists. In the browser, `carRepository.getCars()` is just an RPC call; the SQL, the API model and the mapping run on the server.
 
 ---
 
@@ -609,9 +694,11 @@ When creating or reviewing a pod:
 - Create the pod
 - Define the ViewModel around frontend needs
 - Define API models around the backend contract
-- Add an API client for I/O
+- Add an API client for I/O, named `{api-name}.api.server.ts`
 - Add complete API model ↔ ViewModel mapping
 - Add a repository when the pod loads or persists data
+- Define the repository operations as server functions (`createServerFn` + middleware + `.validator()`)
+- Ensure `.api.server.ts` functions are called only inside repository server function handlers
 - Ensure the repository is the only consumer of the API and mapper
 - Ensure repository methods expose only frontend-facing types
 - Ensure API models never escape the repository boundary
@@ -634,6 +721,12 @@ Before finishing, search for architectural leaks:
 - Mapper calls outside repositories
 - Raw API responses returned by repositories
 - Date, enum, field-name, or shape conversion performed by loaders or components
+- API files not ending in `.api.server.ts`
+- `createServerFn` defined outside a repository (routes, components, API files)
+- `.api.server.ts` functions used outside a repository server function handler
+- Repository server functions touching private data without auth middleware or without `.validator()`
+
+Run the build after changes: an `Import denied in client environment` error means server-only code is reachable from the client.
 
 Also search for naming and import violations:
 
@@ -651,9 +744,9 @@ If any of these exist, fix the repository boundary, naming, or imports before co
 
 - Routes = thin orchestration
 - Pods = isolated features
-- API = backend communication using API models
-- Mapper = complete API model ↔ ViewModel transformation
-- Repository = boundary and single data-access entry point
+- API = server-only backend communication using API models (`.api.server.ts`)
+- Mapper = complete API model ↔ ViewModel transformation (runs on the server)
+- Repository = boundary, single data-access entry point, and the pod's server functions
 - ViewModel = the only model exposed to frontend consumers
 - Components = `.component.tsx`
 - Pod entry points = `.pod.tsx`
